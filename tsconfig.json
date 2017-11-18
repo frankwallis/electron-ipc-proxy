@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "declaration": true,
+    "sourceMap": true,
+    "noEmitHelpers": true,
+    "importHelpers": true,
+    "strict": true,
+    "lib": ["es2017", "dom"],
+    "rootDirs": ["src", "test"]
+  },
+  "include": ["src", "test"]
+}

@@ -1,0 +1,55 @@
+{
+  "name": "event-emitter-proxy",
+  "version": "0.1.0",
+  "description": "Transparently proxy objects using EventEmitter as transport",
+  "main": "src/server.js",
+  "browser": "src/client.js",
+  "directories": {
+    "lib": "src"
+  },
+  "scripts": {
+    "build": "npm run clean && tsc",
+    "clean": "rimraf src/**/*.js src/**/*.js.map src/**/*.d.ts",
+    "lint": "tslint **/*.ts -e \"lib/**/*.ts\" -t verbose",
+    "test": "tsc && ava"
+  },
+  "ava": {
+    "require": [
+      "reify"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frankwallis/ripcurl.git"
+  },
+  "keywords": [
+    "proxy",
+    "rpc",
+    "event",
+    "emitter",
+    "electron",
+    "ipc",
+    "rxjs",
+    "observable",
+    "promise"
+  ],
+  "author": "Frank Wallis",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/frankwallis/ripcurl/issues"
+  },
+  "homepage": "https://github.com/frankwallis/ripcurl",
+  "dependencies": {
+    "tslib": "^1.8.0",
+    "uuid": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/uuid": "^3.4.3",
+    "ava": "^0.23.0",
+    "electron": "^1.7.9",
+    "prettier": "^1.8.2",
+    "reify": "^0.12.3",
+    "rxjs": "^5.5.2",
+    "typescript": "2.5.2"
+  }
+}
