@@ -1,5 +1,4 @@
 import test from 'ava';
-import { EventEmitter } from 'events';
 import { ProxyPropertyType } from '../src/common';
 import { registerProxy } from '../src/server';
 import { createProxy } from '../src/client';
@@ -39,9 +38,9 @@ const descriptor = {
     }
 };
 
-const eventEmitter = new EventEmitter();
-const server = registerProxy(eventEmitter, proxiedObject, descriptor);
-const client = createProxy<ProxyObject>(eventEmitter, descriptor);
+const { ipcMain, ipcRenderer } = require('electron-ipc-mock')();
+const unregister = registerProxy(ipcMain, proxiedObject, descriptor);
+const client = createProxy<ProxyObject>(ipcRenderer, descriptor);
 
 test('returns string property', async t => {
     t.is(await client.stringMemberSync, 'a string');

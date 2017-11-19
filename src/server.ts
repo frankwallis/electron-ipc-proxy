@@ -1,22 +1,22 @@
 import { Observable } from 'rxjs';
-import { EventEmitter } from 'events';
-import { Request, RequestType, Response, ResponseType, ProxyDescriptor } from './common';
+import { IpcMain, Event } from 'electron';
+import { Request, RequestType, Response, ResponseType, ProxyDescriptor, ProxyPropertyType } from './common';
 
 const Errio = require('errio');
 
 const registrations: any = {};
 
-export function registerProxy<T>(transport: EventEmitter, target: T, descriptor: ProxyDescriptor): VoidFunction {
+export function registerProxy<T>(transport: IpcMain, target: T, descriptor: ProxyDescriptor): VoidFunction {
     const { channel } = descriptor;
     
     if (registrations[channel]) {
         throw new Error(`Channel ${channel} as already been registered`);
     }
     
-    registrations[channel] = target;
-    transport.on(channel, (request: Request, correlationId: string) => {
+    registrations[channel] = transport;
+    transport.on(channel, (event: Event, request: Request, correlationId: string) => {
         handleRequest(target, request)
-            .then(response => transport.emit(correlationId, response));
+            .then(response => event.sender.send(correlationId, response));
     });
 
     return () => unregisterProxy(channel);
@@ -29,7 +29,7 @@ function unregisterProxy(channel: string) {
         throw new Error(`Channel ${channel} is not registered`);
     }
 
-    registration.transport.removeAllListeners(channel);
+    registration.removeAllListeners(channel);
     registrations[channel] = null;
 }
 
@@ -82,3 +82,5 @@ function isObservable<T>(value: any): value is Observable<T> {
 function isPromise<T>(value: any): value is Promise<T> {
     return value && typeof value.subscribe !== 'function' && typeof value.then === 'function';
 }
+
+export { ProxyDescriptor, ProxyPropertyType }

@@ -1,25 +1,25 @@
 import { Observable } from 'rxjs';
-import { EventEmitter } from 'events';
+import { IpcRenderer, Event } from 'electron';
 import { Request, RequestType, Response, ResponseType, ProxyDescriptor, ProxyPropertyType } from './common';
 
 const uuidv4 = require('uuid/v4');
 const Errio = require('errio');
 
-export function createProxy<T>(transport: EventEmitter, descriptor: ProxyDescriptor): T {
+export function createProxy<T>(transport: IpcRenderer, descriptor: ProxyDescriptor): T {
     return new Proxy({}, new ProxyClientHandler(descriptor, transport)) as T;
 }
 
 class ProxyClientHandler implements ProxyHandler<any> {
-    constructor(private descriptor: ProxyDescriptor, private transport: EventEmitter) {
+    constructor(private descriptor: ProxyDescriptor, private transport: IpcRenderer) {
 
     }
 
     private makeRequest(request: Request): Promise<any> {
         const correlationId = uuidv4();
-        this.transport.emit(this.descriptor.channel, request, correlationId);
+        this.transport.send(this.descriptor.channel, request, correlationId);
 
         return new Promise((resolve, reject) => {
-            this.transport.once(correlationId, (response: Response) => {
+            this.transport.once(correlationId, (event: Event, response: Response) => {
                 switch (response.type) {
                     case ResponseType.Result:
                         return resolve(response.result);
@@ -83,3 +83,5 @@ class ProxyClientHandler implements ProxyHandler<any> {
     // ownKeys? (target: T): PropertyKey[];
     // construct? (target: T, argArray: any, newTarget?: any): object;
 }
+
+export { ProxyDescriptor, ProxyPropertyType }

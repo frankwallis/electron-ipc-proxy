@@ -2,8 +2,9 @@
 .idea/
 .reify-cache/
 node_modules/
-lib/
 *.log
-*.js
 *.js.map
 *.d.ts
+src/**/*.js
+test/**/*.js
+example/bundle.js

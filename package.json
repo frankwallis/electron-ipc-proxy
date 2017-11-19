@@ -1,5 +1,5 @@
 {
-  "name": "event-emitter-proxy",
+  "name": "electron-ipc-proxy",
   "version": "0.1.0",
   "description": "Transparently proxy objects using EventEmitter as transport",
   "main": "src/server.js",
@@ -10,8 +10,8 @@
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rimraf src/**/*.js src/**/*.js.map src/**/*.d.ts",
-    "lint": "tslint **/*.ts -e \"lib/**/*.ts\" -t verbose",
-    "test": "tsc && ava"
+    "test": "tsc && ava",
+    "example": "tsc && cd example && rollup app.js --output.format iife --output.file bundle.js && electron -r reify main.js"
   },
   "ava": {
     "verbose": true,
@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/frankwallis/ripcurl.git"
+    "url": "git+https://github.com/frankwallis/electron-ipc-proxy.git"
   },
   "keywords": [
     "proxy",
@@ -37,9 +37,9 @@
   "author": "Frank Wallis",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/frankwallis/ripcurl/issues"
+    "url": "https://github.com/frankwallis/electron-ipc-proxy/issues"
   },
-  "homepage": "https://github.com/frankwallis/ripcurl",
+  "homepage": "https://github.com/frankwallis/electron-ipc-proxy",
   "dependencies": {
     "errio": "^1.2.2",
     "tslib": "^1.8.0",
@@ -49,8 +49,10 @@
     "@types/uuid": "^3.4.3",
     "ava": "^0.23.0",
     "electron": "^1.7.9",
+    "electron-ipc-mock": "0.0.3",
     "prettier": "^1.8.2",
     "reify": "^0.12.3",
+    "rollup": "^0.51.7",
     "rxjs": "^5.5.2",
     "typescript": "2.5.2"
   }
