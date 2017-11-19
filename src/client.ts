@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 import { IpcRenderer, Event } from 'electron';
 import { Request, RequestType, Response, ResponseType, ProxyDescriptor, ProxyPropertyType } from './common';
 
@@ -10,9 +10,7 @@ export function createProxy<T>(transport: IpcRenderer, descriptor: ProxyDescript
 }
 
 class ProxyClientHandler implements ProxyHandler<any> {
-    constructor(private descriptor: ProxyDescriptor, private transport: IpcRenderer) {
-
-    }
+    constructor(private descriptor: ProxyDescriptor, private transport: IpcRenderer) {}
 
     private makeRequest(request: Request): Promise<any> {
         const correlationId = uuidv4();
@@ -26,26 +24,66 @@ class ProxyClientHandler implements ProxyHandler<any> {
                     case ResponseType.Error:
                         return reject(Errio.parse(response.error));
                     default:
-                        throw new Error(`Unhandled response type [${response.type}]`);
+                        return reject(new Error(`Unhandled response type [${response.type}]`));
                 }
             });
         });
     }
 
-    public get(target: any, p: PropertyKey, receiver: any): any {
-        const propName = p as string;
+    private makeObservable(propKey: string): Observable<any> {
+        return new Observable((obs) => {
+            const subscriptionId = uuidv4();
+    
+            this.transport.on(subscriptionId, (event: Event, response: Response) => {
+                switch (response.type) {
+                    case ResponseType.Next:
+                        return obs.next(response.value);
+                    case ResponseType.Error:
+                        return obs.error(Errio.parse(response.error));
+                    case ResponseType.Complete:
+                        return obs.complete();
+                    default:
+                        return obs.error(new Error(`Unhandled response type [${response.type}]`));
+                }
+            });
 
-        if (this.descriptor.properties[propName] === ProxyPropertyType.Function) {
-            if (!target[propName]) {
-                target[propName] = (...args: any[]) => this.makeRequest({ type: RequestType.Apply, name: propName, args });
+            this.makeRequest({ type: RequestType.Subscribe, propKey, subscriptionId })
+                .catch((err: Error) => {
+                    console.log('Error subscribing to remote stream', err);                    
+                    obs.error(err);
+                });
+
+            return () => {
+                this.transport.removeAllListeners(subscriptionId);
+                this.makeRequest({ type: RequestType.Unsubscribe, subscriptionId })
+                    .catch(err => {
+                        console.log('Error unsubscribing from remote stream', err);
+                        obs.error(err);
+                    });
+            };
+        });
+    }
+
+    public get(target: any, p: PropertyKey, receiver: any): any {
+        const propKey = p as string;
+
+        if (this.descriptor.properties[propKey] === ProxyPropertyType.Function) {
+            if (!target[propKey]) {
+                target[propKey] = (...args: any[]) => this.makeRequest({ type: RequestType.Apply, propKey, args });
             }
-            return target[propName];
+            return target[propKey];
         }
-        else if (this.descriptor.properties[propName] === ProxyPropertyType.Value) {
-            return this.makeRequest({ type: RequestType.Get, name: p });
+        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Observable) {
+            if (!target[propKey]) {
+                target[propKey] = this.makeObservable(propKey);
+            }
+            return target[propKey];
+        }
+        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Value) {
+            return this.makeRequest({ type: RequestType.Get, propKey });
         }
         else {
-            throw new Error(`property "${p}" has not been made available on the proxy object`);
+            throw new Error(`property "${propKey}" has not been made available on the proxy object`);
         }
     }
     

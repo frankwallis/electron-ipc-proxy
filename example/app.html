@@ -14,13 +14,18 @@
 </head>
 
 <body>
-	<button id="button-create-window">New Window</button>
-	<div>
+	<div class="panel-group">
+		<button id="button-create-window">New Window</button>
+	</div>
+	<div class="panel-group">
 		<input id="add-operand-1" type="number" />
 		<span>+</span>
 		<input id="add-operand-2" type="number" />
 		<span>=</span>
 		<input id="add-total" type="number" readonly />
+	</div>
+	<div class="panel-group">
+		<span id="time-display"></span>
 	</div>
 	<script src="./bundle.js"></script>
 </body>

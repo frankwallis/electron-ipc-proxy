@@ -11,7 +11,7 @@
     "build": "npm run clean && tsc",
     "clean": "rimraf src/**/*.js src/**/*.js.map src/**/*.d.ts",
     "test": "tsc && ava",
-    "example": "tsc && cd example && rollup app.js --output.format iife --output.file bundle.js && electron -r reify main.js"
+    "example": "tsc && cd example && rollup --config && electron -r reify main.js"
   },
   "ava": {
     "verbose": true,
@@ -49,10 +49,11 @@
     "@types/uuid": "^3.4.3",
     "ava": "^0.23.0",
     "electron": "^1.7.9",
-    "electron-ipc-mock": "0.0.3",
     "prettier": "^1.8.2",
     "reify": "^0.12.3",
     "rollup": "^0.51.7",
+    "rollup-plugin-commonjs": "^8.2.6",
+    "rollup-plugin-node-resolve": "^3.0.0",
     "rxjs": "^5.5.2",
     "typescript": "2.5.2"
   }

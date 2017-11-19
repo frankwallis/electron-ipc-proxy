@@ -6,7 +6,8 @@ const service = createProxy(ipcRenderer, {
     channel: 'service',
     properties: {
         createWindow: ProxyPropertyType.Function,
-        add: ProxyPropertyType.Function
+        add: ProxyPropertyType.Function,
+        time: ProxyPropertyType.Observable
     }
 });
 
@@ -31,3 +32,7 @@ inputOperand1.addEventListener('change', updateTotal);
 inputOperand2.addEventListener('change', updateTotal);
 
 /* Observable stream */
+const timeDisplay = document.querySelector('#time-display');
+const subscription = service.time.subscribe(str => timeDisplay.innerHTML = str);
+
+window.addEventListener('beforeunload', () => subscription.unsubscribe());

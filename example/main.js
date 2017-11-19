@@ -1,6 +1,7 @@
 import path from 'path';
 import url from 'url';
 import { app, ipcMain, BrowserWindow } from 'electron';
+import { Observable } from 'rxjs';
 import { registerProxy, ProxyPropertyType } from '../src/server';
 
 let lastBounds = null;
@@ -21,7 +22,8 @@ function createWindow(title) {
 /* This is the service we are going to expose to renderer threads */
 const service = {
     createWindow: createWindow,
-    add: (num1, num2) => num1 + num2
+    add: (num1, num2) => num1 + num2,
+    time: Observable.interval(10).map(() => new Date())
 }
 
 const unregister = registerProxy(ipcMain, service, {

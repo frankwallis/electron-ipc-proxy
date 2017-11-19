@@ -4,19 +4,16 @@ export enum ProxyPropertyType {
     Observable = 'observable'
 }
 
-export interface ProxyPropertyDescriptor {
-    name: string;
-    type: ProxyPropertyType
-} 
-
 export interface ProxyDescriptor {
     channel: string;
-    properties: { [key: string]: ProxyPropertyType }
+    properties: { [propKey: string]: ProxyPropertyType };
 }
 
 export enum RequestType {
     Get = 'get',
-    Apply = 'apply'
+    Apply = 'apply',
+    Subscribe = 'subscribe',
+    Unsubscribe = 'unsubscribe'
 }
 
 export interface UnknownRequest {
@@ -25,24 +22,33 @@ export interface UnknownRequest {
 
 export interface GetRequest {
     type: RequestType.Get;
-    name: PropertyKey;
+    propKey: PropertyKey;
 }
 
 export interface ApplyRequest {
     type: RequestType.Apply;
-    name: string;
+    propKey: string;
     args: any[];
 }
 
-export type Request = UnknownRequest | GetRequest | ApplyRequest;
-
-export enum ResponseType {
-    Result = 'result',
-    Error = 'error'
+export interface SubscribeRequest {
+    type: RequestType.Subscribe;
+    propKey: string;
+    subscriptionId: string;
 }
 
-export interface UnknownResponse {
-    type: 'unknown';
+export interface UnsubscribeRequest {
+    type: RequestType.Unsubscribe;
+    subscriptionId: string;
+}
+
+export type Request = UnknownRequest | GetRequest | ApplyRequest | SubscribeRequest | UnsubscribeRequest;
+
+export enum ResponseType {
+    Result = 'result',    
+    Error = 'error',
+    Next = 'next',
+    Complete = 'complete'
 }
 
 export interface ResultResponse {
@@ -55,4 +61,13 @@ export interface ErrorResponse {
     error: any;
 }
 
-export type Response = UnknownResponse | ResultResponse | ErrorResponse;
+export interface NextResponse {
+    type: ResponseType.Next;
+    value: any;
+}
+
+export interface CompleteResponse {
+    type: ResponseType.Complete;
+}
+
+export type Response = ResultResponse | ErrorResponse | NextResponse | CompleteResponse;
