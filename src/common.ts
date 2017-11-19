@@ -1,3 +1,19 @@
+export enum ProxyPropertyType {
+    Value = 'value',
+    Function = 'function',
+    Observable = 'observable'
+}
+
+export interface ProxyPropertyDescriptor {
+    name: string;
+    type: ProxyPropertyType
+} 
+
+export interface ProxyDescriptor {
+    channel: string;
+    properties: { [key: string]: ProxyPropertyType }
+}
+
 export enum RequestType {
     Get = 'get',
     Apply = 'apply'

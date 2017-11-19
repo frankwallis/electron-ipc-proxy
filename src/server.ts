@@ -1,20 +1,22 @@
 import { Observable } from 'rxjs';
 import { EventEmitter } from 'events';
-import { Request, RequestType, Response, ResponseType } from './common';
+import { Request, RequestType, Response, ResponseType, ProxyDescriptor } from './common';
 
-export type UnregisterFunction = () => void;
+const Errio = require('errio');
 
 const registrations: any = {};
 
-export function registerProxy<T>(target: T, channel: string, transport: EventEmitter): UnregisterFunction {
+export function registerProxy<T>(transport: EventEmitter, target: T, descriptor: ProxyDescriptor): VoidFunction {
+    const { channel } = descriptor;
+    
     if (registrations[channel]) {
         throw new Error(`Channel ${channel} as already been registered`);
     }
     
     registrations[channel] = target;
     transport.on(channel, (request: Request, correlationId: string) => {
-        const response = handleRequest(target, request);
-        response.then(response => transport.emit(correlationId, response));
+        handleRequest(target, request)
+            .then(response => transport.emit(correlationId, response));
     });
 
     return () => unregisterProxy(channel);
@@ -38,7 +40,7 @@ async function handleRequest(target: any, request: Request): Promise<Response> {
         return response;
     }
     catch (err) {
-        return { type: ResponseType.Error, error: err };
+        return { type: ResponseType.Error, error: Errio.stringify(err) };
     }
 }
 
@@ -74,9 +76,9 @@ function isFunction(value: any): value is Function {
 }
 
 function isObservable<T>(value: any): value is Observable<T> {
-    return value && typeof (<any>value).subscribe === 'function'
+    return value && typeof value.subscribe === 'function'
 }
 
-function isPromise<T>(value: any | Promise<T>): value is Promise<T> {
-    return value && typeof (<any>value).subscribe !== 'function' && typeof (value as any).then === 'function';
+function isPromise<T>(value: any): value is Promise<T> {
+    return value && typeof value.subscribe !== 'function' && typeof value.then === 'function';
 }
