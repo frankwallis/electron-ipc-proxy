@@ -1,7 +1,7 @@
 {
   "name": "electron-ipc-proxy",
-  "version": "0.1.0",
-  "description": "Transparently proxy objects using EventEmitter as transport",
+  "version": "0.2.0",
+  "description": "Make objects in main thread available to renderer threads over IPC",
   "main": "src/server.js",
   "browser": "src/client.js",
   "directories": {
