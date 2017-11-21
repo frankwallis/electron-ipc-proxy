@@ -30,7 +30,8 @@ const unregister = registerProxy(service, {
     channel: 'service',
     properties: {
         createWindow: ProxyPropertyType.Function,
-        add: ProxyPropertyType.Function
+        add: ProxyPropertyType.Function,
+        time: ProxyPropertyType.Observable
     }
 });
 
