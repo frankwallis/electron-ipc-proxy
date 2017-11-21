@@ -9,7 +9,9 @@ export default {
   },
   name: 'MyModule',
   plugins: [
-    resolve(),
+    resolve({
+      browser: true
+    }),
     commonjs()
   ]
 };

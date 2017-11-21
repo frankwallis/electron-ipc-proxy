@@ -1,6 +1,6 @@
 import test from 'ava';
 import { Observable } from 'rxjs';
-import { ProxyPropertyType } from '../src/common';
+import { ProxyPropertyType, IpcProxyError } from '../src/common';
 import { registerProxy } from '../src/server';
 import { createProxy } from '../src/client';
 import { mockIpc, delay } from './_mocks';
@@ -50,8 +50,8 @@ const descriptor = {
 };
 
 const { ipcMain, ipcRenderer } = mockIpc();
-const unregister = registerProxy(ipcMain, proxiedObject, descriptor);
-const client = createProxy<ProxyObject>(ipcRenderer, descriptor);
+const unregister = registerProxy(proxiedObject, descriptor, ipcMain);
+const client = createProxy<ProxyObject>(descriptor, ipcRenderer);
 
 test('returns string property', async t => {
     t.is(await client.stringMemberSync, 'a string');
@@ -122,3 +122,14 @@ test('throws when trying to access a property which has not been exposed', t => 
 test('throws when trying to call a function which does not exist', t => {
     return t.throws(client.missingFunction());
 });
+
+test('shows "IpcProxyError" in the output', t => {
+    return t.is(new IpcProxyError('some message').toString(), 'IpcProxyError: some message');
+});
+
+test('shows "IpcProxyError" in the remote output', t => {
+    return client.missingFunction()
+        .then(() => t.fail('unexpected resolve'))
+        .catch(err => t.is(err.toString(), 'IpcProxyError: Remote property [missingFunction] is not a function'));
+});
+

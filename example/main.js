@@ -1,8 +1,8 @@
 import path from 'path';
 import url from 'url';
-import { app, ipcMain, BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { Observable } from 'rxjs';
-import { registerProxy, ProxyPropertyType } from '../src/server';
+import { registerProxy, ProxyPropertyType } from '../';
 
 let lastBounds = null;
 
@@ -26,7 +26,7 @@ const service = {
     time: Observable.interval(10).map(() => new Date())
 }
 
-const unregister = registerProxy(ipcMain, service, {
+const unregister = registerProxy(service, {
     channel: 'service',
     properties: {
         createWindow: ProxyPropertyType.Function,

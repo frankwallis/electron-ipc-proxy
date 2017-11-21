@@ -1,11 +1,12 @@
 import { Observable } from 'rxjs/Observable';
 import { IpcRenderer, Event } from 'electron';
-import { Request, RequestType, Response, ResponseType, ProxyDescriptor, ProxyPropertyType } from './common';
+import { Request, RequestType, Response, ResponseType, ProxyDescriptor, ProxyPropertyType, IpcProxyError } from './common';
 
+const { ipcRenderer } = require('electron');
 const uuidv4 = require('uuid/v4');
 const Errio = require('errio');
 
-export function createProxy<T>(transport: IpcRenderer, descriptor: ProxyDescriptor): T {
+export function createProxy<T>(descriptor: ProxyDescriptor, transport: IpcRenderer = ipcRenderer): T {
     return new Proxy({}, new ProxyClientHandler(descriptor, transport)) as T;
 }
 
@@ -24,7 +25,7 @@ class ProxyClientHandler implements ProxyHandler<any> {
                     case ResponseType.Error:
                         return reject(Errio.parse(response.error));
                     default:
-                        return reject(new Error(`Unhandled response type [${response.type}]`));
+                        return reject(new IpcProxyError(`Unhandled response type [${response.type}]`));
                 }
             });
         });
@@ -43,13 +44,13 @@ class ProxyClientHandler implements ProxyHandler<any> {
                     case ResponseType.Complete:
                         return obs.complete();
                     default:
-                        return obs.error(new Error(`Unhandled response type [${response.type}]`));
+                        return obs.error(new IpcProxyError(`Unhandled response type [${response.type}]`));
                 }
             });
 
             this.makeRequest({ type: RequestType.Subscribe, propKey, subscriptionId })
                 .catch((err: Error) => {
-                    console.log('Error subscribing to remote stream', err);                    
+                    console.log('Error subscribing to remote observable', err);                    
                     obs.error(err);
                 });
 
@@ -57,7 +58,7 @@ class ProxyClientHandler implements ProxyHandler<any> {
                 this.transport.removeAllListeners(subscriptionId);
                 this.makeRequest({ type: RequestType.Unsubscribe, subscriptionId })
                     .catch(err => {
-                        console.log('Error unsubscribing from remote stream', err);
+                        console.log('Error unsubscribing from remote observale', err);
                         obs.error(err);
                     });
             };
@@ -83,43 +84,30 @@ class ProxyClientHandler implements ProxyHandler<any> {
             return this.makeRequest({ type: RequestType.Get, propKey });
         }
         else {
-            throw new Error(`property "${propKey}" has not been made available on the proxy object`);
+            throw new IpcProxyError(`Local property "${propKey}" has not been made available on the proxy object`);
         }
     }
     
-    public apply(target: any, thisArg: any, argArray?: any): any {
-        throw new Error('"apply" is not supported by the proxy object');
-    }
-
     public isExtensible(target: any): boolean {
         return false;
     }
     
-    public preventExtensions(target: any): boolean {
-        throw new Error('"preventExtensions" is not supported by the proxy object');
-    }
-
-    public set(target: any, p: PropertyKey, value: any, receiver: any): boolean {
-        throw new Error('"set" is not supported by the proxy object');
-    }
-
-    public deleteProperty(target: any, p: PropertyKey): boolean {
-        throw new Error('"deleteProperty" is not supported by the proxy object');
+    private throwUnsupported(name: string): any {
+        throw new IpcProxyError(`"${name}" is not supported by the proxy object`);
     }
     
-    public defineProperty(target: any, p: PropertyKey, attributes: PropertyDescriptor): boolean {
-        throw new Error('"defineProperty" is not supported by the proxy object');
-    }
-
-    // getPrototypeOf? (target: T): object | null {
-    //     throw new Error("Not supported");
-    // }
-    // setPrototypeOf? (target: T, v: any): boolean;
-    // getOwnPropertyDescriptor? (target: T, p: PropertyKey): PropertyDescriptor | undefined;
-    // has? (target: T, p: PropertyKey): boolean;
-    // enumerate? (target: T): PropertyKey[];
-    // ownKeys? (target: T): PropertyKey[];
-    // construct? (target: T, argArray: any, newTarget?: any): object;
+    public set = () => this.throwUnsupported('set');
+    public apply = () => this.throwUnsupported('apply');
+    public deleteProperty = () => this.throwUnsupported('deleteProperty');
+    public defineProperty = () => this.throwUnsupported('defineProperty');
+    public getPrototypeOf = () => this.throwUnsupported('getPrototypeOf');
+    public setPrototypeOf = () => this.throwUnsupported('setPrototypeOf');
+    public getOwnPropertyDescriptor = () => this.throwUnsupported('getOwnPropertyDescriptor');
+    public has = () => this.throwUnsupported('has');
+    public enumerate = () => this.throwUnsupported('enumerate');
+    public ownKeys = () => this.throwUnsupported('ownKeys');
+    public preventExtensions = () => this.throwUnsupported('preventExtensions');
+    public construct = () => this.throwUnsupported('construct');
 }
 
 export { ProxyDescriptor, ProxyPropertyType }
