@@ -23,7 +23,8 @@ function createWindow(title) {
 const service = {
     createWindow: createWindow,
     add: (num1, num2) => num1 + num2,
-    time: Observable.interval(10).map(() => new Date())
+    time: Observable.interval(10).map(() => new Date()),
+    respondAfter: (millis) => new Promise(resolve => setTimeout(resolve, millis))
 }
 
 const unregister = registerProxy(service, {
@@ -31,7 +32,8 @@ const unregister = registerProxy(service, {
     properties: {
         createWindow: ProxyPropertyType.Function,
         add: ProxyPropertyType.Function,
-        time: ProxyPropertyType.Observable
+        time: ProxyPropertyType.Observable,
+        respondAfter: ProxyPropertyType.Function
     }
 });
 

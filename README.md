@@ -27,7 +27,7 @@ You can make this service available to renderer threads by registering it with e
 import { registerProxy } from 'electron-ipc-proxy'
 
 const todoService = createTodoService(...)
-registerProxy(todoService, serviceDescriptor);
+registerProxy(todoService, serviceDescriptor)
 ```
 
 And then access it from renderer threads:
@@ -49,10 +49,10 @@ import { ProxyPropertyType } from 'electron-ipc-proxy'
 const todoServiceDescriptor = {
     channel: "todoService",
     properties: {
-        todos: ProxyPropertyType.Observable;
-        canAddTodos: ProxyPropertyType.Property;
-        addTodo: ProxyPropertyType.Function;
-        getTodosFor: ProxyPropertyType.ObservableFactory;
+        todos: ProxyPropertyType.Observable,
+        canAddTodos: ProxyPropertyType.Property,
+        addTodo: ProxyPropertyType.Function,
+        getTodosFor: ProxyPropertyType.ObservableFactory
     }
 }
 ```
@@ -71,6 +71,7 @@ The packages exposes 2 entry points in the "main" and "browser" fields of packag
 
 ```sh
 git clone https://github.com/frankwallis/electron-ipc-proxy.git
+cd electron-ipc-proxy
 npm install
 npm run example
 ```

@@ -22,10 +22,12 @@ export function registerProxy<T>(target: T, descriptor: ProxyDescriptor, transpo
     registrations[channel] = server;
 
     transport.on(channel, (event: Event, request: Request, correlationId: string) => {
-        const { sender } = event;
+        let { sender } = event;
+        sender.once('destroyed', () => { sender = null });
+
         server.handleRequest(request, sender)        
-            .then(result => sender.send(correlationId, { type: ResponseType.Result, result }))
-            .catch(error => sender.send(correlationId, { type: ResponseType.Error, error: Errio.stringify(error) }));
+            .then(result => sender && sender.send(correlationId, { type: ResponseType.Result, result }))
+            .catch(error => sender && sender.send(correlationId, { type: ResponseType.Error, error: Errio.stringify(error) }));
     });
 
     return () => unregisterProxy(channel, transport);

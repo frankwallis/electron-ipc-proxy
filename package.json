@@ -10,7 +10,7 @@
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rimraf src/**/*.js src/**/*.js.map src/**/*.d.ts",
-    "test": "tsc && ava",
+    "test": "tsc && ava --serial",
     "example": "tsc && cd example && rollup --config && electron -r reify main.js"
   },
   "ava": {

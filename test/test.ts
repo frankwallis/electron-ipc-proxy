@@ -12,6 +12,7 @@ const proxiedObject = {
     throwErrorAsync: () => { return Promise.reject(new Error('a rejection')); },
     addSync: (num1: number, num2: number) => num1 + num2,
     addAsync: (num1: number, num2: number) => Promise.resolve(num1 + num2),
+    respondAfter: (millis: number) => new Promise(resolve => setTimeout(resolve, millis)),
     observableProp: Observable.of(1, 2, 3),
     observableHot: Observable.interval(100),
     observableError: Observable.throw(new Error('error on stream')),
@@ -25,6 +26,7 @@ interface ProxyObject {
     throwErrorAsync(): Promise<any>;
     addSync(num1: number, num2: number): Promise<number>;
     addAsync(num1: number, num2: number): Promise<number>;
+    respondAfter(millis: number): Promise<void>;
     observableProp: Observable<number>;
     observableError: Observable<any>;
     observableHot: Observable<any>;
@@ -42,6 +44,7 @@ const descriptor = {
         throwErrorAsync: ProxyPropertyType.Function,
         addSync: ProxyPropertyType.Function,
         addAsync: ProxyPropertyType.Function,
+        respondAfter: ProxyPropertyType.Function,
         observableProp: ProxyPropertyType.Observable,
         observableError: ProxyPropertyType.Observable,
         observableHot: ProxyPropertyType.Observable,
@@ -50,8 +53,17 @@ const descriptor = {
 };
 
 const { ipcMain, ipcRenderer } = mockIpc();
-const unregister = registerProxy(proxiedObject, descriptor, ipcMain);
-const client = createProxy<ProxyObject>(descriptor, ipcRenderer);
+let unregister: VoidFunction = null;
+let client: ProxyObject = null;
+
+test.beforeEach(t => {
+    unregister = registerProxy(proxiedObject, descriptor, ipcMain);
+    client = createProxy<ProxyObject>(descriptor, ipcRenderer);
+});
+
+test.afterEach.always(t => {
+    unregister();
+});
 
 test('returns string property', async t => {
     t.is(await client.stringMemberSync, 'a string');
@@ -75,6 +87,14 @@ test('calls function which returns result synchronously', async t => {
 
 test('calls function which returns a promise', async t => {
     t.is(await client.addAsync(4, 7), 11);
+});
+
+test('does not respond to promises after renderer emits "destroyed" event', async t => {
+    let counter = 0;
+    client.respondAfter(200).then(() => counter ++).catch(() => counter ++);
+    ipcRenderer.emit('destroyed');    
+    await delay(250);
+    t.is(counter, 0);
 });
 
 test('returns observable property', async t => {

@@ -8,6 +8,7 @@
     "noEmitHelpers": true,
     "importHelpers": true,
     "strict": true,
+    "strictNullChecks": false,
     "lib": ["es2017", "dom"],
     "rootDirs": ["src", "test"]
   },

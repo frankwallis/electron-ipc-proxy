@@ -6,7 +6,8 @@ const service = createProxy({
     properties: {
         createWindow: ProxyPropertyType.Function,
         add: ProxyPropertyType.Function,
-        time: ProxyPropertyType.Observable
+        time: ProxyPropertyType.Observable,
+        respondAfter: ProxyPropertyType.Function
     }
 });
 
@@ -52,3 +53,10 @@ const timeDisplay = document.querySelector('#time-display');
 const subscription = service.time.subscribe(str => timeDisplay.innerHTML = str);
 
 window.addEventListener('beforeunload', () => subscription.unsubscribe());
+
+/* Long running promise */
+const buttonRequestClose = document.querySelector('#button-request-close');
+buttonRequestClose.addEventListener('click', () => {
+    service.respondAfter(500).then(() => 'Received response');
+    require('electron').remote.getCurrentWindow().close();
+});
