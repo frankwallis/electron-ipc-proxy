@@ -1,4 +1,3 @@
-import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 import { ipcMain, IpcMain, Event, WebContents } from 'electron';
 import { 
@@ -45,7 +44,7 @@ function unregisterProxy(channel: string, transport: IpcMain) {
     registrations[channel] = null;
 }
 
-class ProxyServerHandler{
+class ProxyServerHandler {
     constructor(private target: any) {}
 
     private subscriptions: { [subscriptionId: string]: Subscription } = {};

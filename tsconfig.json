@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2016",
     "module": "esnext",
     "moduleResolution": "node",
     "declaration": true,
@@ -9,6 +9,9 @@
     "importHelpers": true,
     "strict": true,
     "strictNullChecks": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noImplicitThis": true,
     "lib": ["es2017", "dom"],
     "rootDirs": ["src", "test"]
   },

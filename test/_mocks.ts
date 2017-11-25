@@ -6,17 +6,18 @@ export function mockIpc() {
     const ipcRenderer = new EventEmitter() as IpcRenderer;
 
     ipcRenderer.send = (channel: string, ...args: any[]) => {
-        ipcMain.emit(channel, createEvent(ipcRenderer), ...args);
+        ipcMain.emit(channel, createEvent(ipcRenderer, ipcMain), ...args);
     }
 
     return { ipcMain, ipcRenderer };
 }
 
-function createEvent(ipcRenderer: any): any {
+function createEvent(sender: EventEmitter, receiver: EventEmitter) {
     return {
         sender: {
-            once: (...args: any[]) => ipcRenderer.once(...args),
-            send: (channel: string, ...args: any[]) => ipcRenderer.emit(channel, {}, ...args)
+            once: (channel: string, listener: Function) => sender.once(channel, listener),
+            send: (channel: string, ...args: any[]) =>
+                sender.emit(channel, createEvent(receiver, sender), ...args)
         }
     };
 }

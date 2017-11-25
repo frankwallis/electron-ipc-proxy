@@ -4,6 +4,7 @@ import { ProxyPropertyType, IpcProxyError } from '../src/common';
 import { registerProxy } from '../src/server';
 import { createProxy } from '../src/client';
 import { mockIpc, delay } from './_mocks';
+import { IpcMain, IpcRenderer } from 'electron';
 
 const proxiedObject = {
     stringMemberSync: 'a string',
@@ -52,11 +53,13 @@ const descriptor = {
     }
 };
 
-const { ipcMain, ipcRenderer } = mockIpc();
+let ipcMain: IpcMain = null;
+let ipcRenderer: IpcRenderer = null;
 let unregister: VoidFunction = null;
 let client: ProxyObject = null;
 
 test.beforeEach(t => {
+    ({ ipcMain, ipcRenderer } = mockIpc());
     unregister = registerProxy(proxiedObject, descriptor, ipcMain);
     client = createProxy<ProxyObject>(descriptor, ipcRenderer);
 });
@@ -121,7 +124,7 @@ test('unsubscribes from hot observable streams', async t => {
 
 test('automatically unsubscribes when renderer emits "destroyed" event', async t => {
     let counter = 0;
-    const subscription = client.observableHot.subscribe(() => counter++);
+    client.observableHot.subscribe(() => counter++);
     await delay(250);
     t.is(counter, 2);
     ipcRenderer.emit('destroyed');
