@@ -1,6 +1,6 @@
 {
   "name": "electron-ipc-proxy",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Make objects in main thread available to renderer threads over IPC",
   "main": "src/server.js",
   "browser": "src/client.js",

@@ -6,27 +6,31 @@ import { createProxy } from '../src/client';
 import { mockIpc, delay } from './_mocks';
 import { IpcMain, IpcRenderer } from 'electron';
 
-const proxiedObject = {
-    stringMemberSync: 'a string',
-    stringMemberAsync: Promise.resolve('a string promise'),
-    throwErrorSync: () => { throw new Error('an error'); },
-    throwErrorAsync: () => { return Promise.reject(new Error('a rejection')); },
-    addSync: (num1: number, num2: number) => num1 + num2,
-    addAsync: (num1: number, num2: number) => Promise.resolve(num1 + num2),
-    respondAfter: (millis: number) => new Promise(resolve => setTimeout(resolve, millis)),
-    observableProp: Observable.of(1, 2, 3),
-    observableHot: Observable.interval(100),
-    observableError: Observable.throw(new Error('error on stream')),
-    privateProperty: 42
+class ProxiedClass {
+    stringMemberSync = 'a string';
+    stringMemberAsync = Promise.resolve('a string promise');
+    get stringGetter() { return this.stringMemberSync; }
+    throwErrorSync() { throw new Error('an error'); }
+    throwErrorAsync() { return Promise.reject(new Error('a rejection')); }
+    addSync = (num1: number, num2: number) => num1 + num2;
+    addAsync = (num1: number, num2: number) => Promise.resolve(num1 + num2);
+    returnStringMember() { return this.stringMemberSync; }
+    respondAfter = (millis: number) => new Promise(resolve => setTimeout(resolve, millis));
+    observableProp = Observable.of(1, 2, 3);
+    observableHot = Observable.interval(100);
+    observableError = Observable.throw(new Error('error on stream'));
+    privateProperty = 42;
 }
 
 interface ProxyObject {
     stringMemberSync: Promise<string>;
     stringMemberAsync: Promise<string>;
+    stringGetter: Promise<string>;
     throwErrorSync(): Promise<any>;
     throwErrorAsync(): Promise<any>;
     addSync(num1: number, num2: number): Promise<number>;
     addAsync(num1: number, num2: number): Promise<number>;
+    returnStringMember(): Promise<string>;
     respondAfter(millis: number): Promise<void>;
     observableProp: Observable<number>;
     observableError: Observable<any>;
@@ -41,10 +45,12 @@ const descriptor = {
     properties: {
         stringMemberSync: ProxyPropertyType.Value,
         stringMemberAsync: ProxyPropertyType.Value,
+        stringGetter: ProxyPropertyType.Value,
         throwErrorSync: ProxyPropertyType.Function,
         throwErrorAsync: ProxyPropertyType.Function,
         addSync: ProxyPropertyType.Function,
         addAsync: ProxyPropertyType.Function,
+        returnStringMember: ProxyPropertyType.Function,
         respondAfter: ProxyPropertyType.Function,
         observableProp: ProxyPropertyType.Observable,
         observableError: ProxyPropertyType.Observable,
@@ -60,7 +66,7 @@ let client: ProxyObject = null;
 
 test.beforeEach(t => {
     ({ ipcMain, ipcRenderer } = mockIpc());
-    unregister = registerProxy(proxiedObject, descriptor, ipcMain);
+    unregister = registerProxy(new ProxiedClass(), descriptor, ipcMain);
     client = createProxy<ProxyObject>(descriptor, ipcRenderer);
 });
 
@@ -70,6 +76,10 @@ test.afterEach.always(t => {
 
 test('returns string property', async t => {
     t.is(await client.stringMemberSync, 'a string');
+});
+
+test('binds "this" correctly when accessing getter', async t => {
+    t.is(await client.stringGetter, "a string");
 });
 
 test('returns string property from promise', async t => {
@@ -90,6 +100,10 @@ test('calls function which returns result synchronously', async t => {
 
 test('calls function which returns a promise', async t => {
     t.is(await client.addAsync(4, 7), 11);
+});
+
+test('binds "this" correctly when calling function', async t => {
+    t.is(await client.returnStringMember(), "a string");
 });
 
 test('does not respond to promises after renderer emits "destroyed" event', async t => {

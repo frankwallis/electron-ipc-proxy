@@ -81,7 +81,7 @@ class ProxyServerHandler {
             throw new IpcProxyError(`Remote property [${propKey}] is not a function`)
         }
 
-        return func(...args);
+        return func.apply(this.target, args);
     }
 
     private handleSubscribe(request: SubscribeRequest, sender: WebContents) {
