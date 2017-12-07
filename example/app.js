@@ -6,7 +6,7 @@ const service = createProxy({
     properties: {
         createWindow: ProxyPropertyType.Function,
         add: ProxyPropertyType.Function,
-        time: ProxyPropertyType.Observable,
+        time: ProxyPropertyType.Value$,
         respondAfter: ProxyPropertyType.Function
     }
 });

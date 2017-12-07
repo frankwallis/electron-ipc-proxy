@@ -31,7 +31,7 @@ class ProxyClientHandler implements ProxyHandler<any> {
         });
     }
 
-    private makeObservable(propKey: string): Observable<any> {
+    private makeObservable(requestType: RequestType.Subscribe | RequestType.ApplySubscribe, propKey: string, args?: any[]): Observable<any> {
         return new Observable((obs) => {
             const subscriptionId = uuidv4();
     
@@ -48,7 +48,11 @@ class ProxyClientHandler implements ProxyHandler<any> {
                 }
             });
 
-            this.makeRequest({ type: RequestType.Subscribe, propKey, subscriptionId })
+            const request = (requestType === RequestType.Subscribe) ?
+                { type: RequestType.Subscribe, propKey, subscriptionId } :
+                { type: RequestType.ApplySubscribe, propKey, subscriptionId, args };
+
+            this.makeRequest(request as Request)
                 .catch((err: Error) => {
                     console.log('Error subscribing to remote observable', err);                    
                     obs.error(err);
@@ -68,20 +72,26 @@ class ProxyClientHandler implements ProxyHandler<any> {
     public get(target: any, p: PropertyKey, receiver: any): any {
         const propKey = p as string;
 
-        if (this.descriptor.properties[propKey] === ProxyPropertyType.Function) {
+        if (this.descriptor.properties[propKey] === ProxyPropertyType.Value) {
+            return this.makeRequest({ type: RequestType.Get, propKey });
+        }
+        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Value$) {
+            if (!target[propKey]) {
+                target[propKey] = this.makeObservable(RequestType.Subscribe, propKey);
+            }
+            return target[propKey];
+        }
+        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Function) {
             if (!target[propKey]) {
                 target[propKey] = (...args: any[]) => this.makeRequest({ type: RequestType.Apply, propKey, args });
             }
             return target[propKey];
         }
-        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Observable) {
+        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Function$) {
             if (!target[propKey]) {
-                target[propKey] = this.makeObservable(propKey);
+                target[propKey] = (...args: any[]) => this.makeObservable(RequestType.ApplySubscribe, propKey, args);
             }
             return target[propKey];
-        }
-        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Value) {
-            return this.makeRequest({ type: RequestType.Get, propKey });
         }
         else {
             throw new IpcProxyError(`Local property "${propKey}" has not been made available on the proxy object`);

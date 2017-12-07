@@ -3,8 +3,9 @@ const Errio = require('errio');
 
 export enum ProxyPropertyType {
     Value = 'value',
+    Value$ = 'value$',
     Function = 'function',
-    Observable = 'observable'
+    Function$ = 'function$',
 }
 
 export interface ProxyDescriptor {
@@ -16,6 +17,7 @@ export enum RequestType {
     Get = 'get',
     Apply = 'apply',
     Subscribe = 'subscribe',
+    ApplySubscribe = 'applySubscribe',
     Unsubscribe = 'unsubscribe'
 }
 
@@ -40,12 +42,19 @@ export interface SubscribeRequest {
     subscriptionId: string;
 }
 
+export interface ApplySubscribeRequest {
+    type: RequestType.ApplySubscribe;
+    propKey: string;
+    args: any[];
+    subscriptionId: string;
+}
+
 export interface UnsubscribeRequest {
     type: RequestType.Unsubscribe;
     subscriptionId: string;
 }
 
-export type Request = UnknownRequest | GetRequest | ApplyRequest | SubscribeRequest | UnsubscribeRequest;
+export type Request = UnknownRequest | GetRequest | ApplyRequest | SubscribeRequest | ApplySubscribeRequest | UnsubscribeRequest;
 
 export enum ResponseType {
     Result = 'result',    

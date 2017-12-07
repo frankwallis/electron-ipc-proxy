@@ -49,10 +49,10 @@ import { ProxyPropertyType } from 'electron-ipc-proxy'
 const todoServiceDescriptor = {
     channel: "todoService",
     properties: {
-        todos: ProxyPropertyType.Observable,
-        canAddTodos: ProxyPropertyType.Property,
+        todos: ProxyPropertyType.Value$,
+        canAddTodos: ProxyPropertyType.Value,
         addTodo: ProxyPropertyType.Function,
-        getTodosFor: ProxyPropertyType.ObservableFactory
+        getTodosFor: ProxyPropertyType.Function$
     }
 }
 ```

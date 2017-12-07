@@ -4,8 +4,9 @@ import {
     Request, RequestType, ResponseType,
     GetRequest, ApplyRequest, SubscribeRequest, UnsubscribeRequest,
     ProxyDescriptor, ProxyPropertyType, IpcProxyError,
-    isFunction, isObservable
+    isFunction, isObservable, ApplySubscribeRequest
 } from './common';
+import { Observable } from 'rxjs/Observable';
 const Errio = require('errio');
 
 const registrations: { [channel: string]: ProxyServerHandler | null } = {};
@@ -57,6 +58,8 @@ class ProxyServerHandler {
                 return this.handleApply(request);
             case RequestType.Subscribe:
                 return this.handleSubscribe(request, sender);
+            case RequestType.ApplySubscribe:
+                return this.handleApplySubscribe(request, sender);
            case RequestType.Unsubscribe:
                 return this.handleUnsubscribe(request);
             default:
@@ -106,7 +109,39 @@ class ProxyServerHandler {
         /* If the sender does not clean up after itself then we need to do it */
         sender.once('destroyed', () => this.doUnsubscribe(subscriptionId));        
     }
-        
+
+    private handleApplySubscribe(request: ApplySubscribeRequest, sender: WebContents): any {
+        const { propKey, subscriptionId, args } = request;
+        const func = this.target[propKey];
+
+        if (!isFunction(func)) {
+            throw new IpcProxyError(`Remote property [${propKey}] is not a function`)
+        }
+
+        const obs = func.apply(this.target, args);        
+
+        if (!isObservable(obs)) {
+            throw new IpcProxyError(`Remote function [${propKey}] did not return an observable`);
+        }
+
+        this.doSubscribe(obs, subscriptionId, sender);
+    }
+    
+    private doSubscribe(obs: Observable<any>, subscriptionId: string, sender: WebContents) {
+        if (this.subscriptions[subscriptionId]) {
+            throw new IpcProxyError(`A subscription with Id [${subscriptionId}] already exists`);
+        }
+
+        this.subscriptions[subscriptionId] = obs.subscribe(
+            (value) => sender.send(subscriptionId, { type: ResponseType.Next, value }),
+            (error: Error) => sender.send(subscriptionId, { type: ResponseType.Error, error: Errio.stringify(error) }),
+            () => sender.send(subscriptionId, { type: ResponseType.Complete }),
+        );
+
+        /* If the sender does not clean up after itself then we need to do it */
+        sender.once('destroyed', () => this.doUnsubscribe(subscriptionId));        
+    }
+
     private handleUnsubscribe(request: UnsubscribeRequest) {
         const { subscriptionId } = request;
 

@@ -19,6 +19,10 @@ class ProxiedClass {
     observableProp = Observable.of(1, 2, 3);
     observableHot = Observable.interval(100);
     observableError = Observable.throw(new Error('error on stream'));
+    makeObservableProp = (...args: number[]) => Observable.of(...args);
+    makeObservableHot = (interval: number) => Observable.interval(interval);
+    makeObservableError = () => Observable.throw(new Error('error on stream'));
+    returnObservableProp = () => this.observableProp;
     privateProperty = 42;
 }
 
@@ -35,6 +39,10 @@ interface ProxyObject {
     observableProp: Observable<number>;
     observableError: Observable<any>;
     observableHot: Observable<any>;
+    makeObservableProp: (...args: number[]) => Observable<number>;
+    makeObservableError: () => Observable<any>;
+    makeObservableHot: (interval: number) => Observable<any>;
+    returnObservableProp: () => Observable<number>;
     privateProperty: Promise<number>;
     missingFunction: () => Promise<number>;
     newProperty: number;
@@ -52,9 +60,13 @@ const descriptor = {
         addAsync: ProxyPropertyType.Function,
         returnStringMember: ProxyPropertyType.Function,
         respondAfter: ProxyPropertyType.Function,
-        observableProp: ProxyPropertyType.Observable,
-        observableError: ProxyPropertyType.Observable,
-        observableHot: ProxyPropertyType.Observable,
+        observableProp: ProxyPropertyType.Value$,
+        observableError: ProxyPropertyType.Value$,
+        observableHot: ProxyPropertyType.Value$,
+        makeObservableProp: ProxyPropertyType.Function$,
+        makeObservableError: ProxyPropertyType.Function$,
+        makeObservableHot: ProxyPropertyType.Function$,
+        returnObservableProp: ProxyPropertyType.Function$,
         missingFunction: ProxyPropertyType.Function
     }
 };
@@ -74,39 +86,39 @@ test.afterEach.always(t => {
     unregister();
 });
 
-test('returns string property', async t => {
+test('Value: returns string property', async t => {
     t.is(await client.stringMemberSync, 'a string');
 });
 
-test('binds "this" correctly when accessing getter', async t => {
+test('Value: binds "this" correctly when accessing getter', async t => {
     t.is(await client.stringGetter, "a string");
 });
 
-test('returns string property from promise', async t => {
+test('Value: returns string property from promise', async t => {
     t.is(await client.stringMemberAsync, 'a string promise');
 });
 
-test('returns errors thrown synchronously', t => {
+test('Function: returns errors thrown synchronously', t => {
     return t.throws(client.throwErrorSync(), 'an error');
 });
 
-test('returns string promise member', t => {
+test('Function: returns rejected promise', t => {
     return t.throws(client.throwErrorAsync(), 'a rejection');
 });
 
-test('calls function which returns result synchronously', async t => {
+test('Function: handles function which returns result synchronously', async t => {
     t.is(await client.addSync(4, 5), 9);
 });
 
-test('calls function which returns a promise', async t => {
+test('Function: handles function which returns a promise', async t => {
     t.is(await client.addAsync(4, 7), 11);
 });
 
-test('binds "this" correctly when calling function', async t => {
+test('Function: binds "this" correctly when calling function', async t => {
     t.is(await client.returnStringMember(), "a string");
 });
 
-test('does not respond to promises after renderer emits "destroyed" event', async t => {
+test('Function: does not respond to promises after renderer emits "destroyed" event', async t => {
     let counter = 0;
     client.respondAfter(200).then(() => counter ++).catch(() => counter ++);
     ipcRenderer.emit('destroyed');    
@@ -114,19 +126,19 @@ test('does not respond to promises after renderer emits "destroyed" event', asyn
     t.is(counter, 0);
 });
 
-test('returns observable property', async t => {
+test('Value$: returns observable property', async t => {
     t.deepEqual(await client.observableProp.toArray().toPromise(), [1, 2, 3]);
 });
 
-test('handles observable errors', async t => {
+test('Value$: handles observable errors', async t => {
     return t.throws(client.observableError.toPromise());
 });
 
-test('handles hot observable streams', async t => {
+test('Value$: handles hot observable streams', async t => {
     return t.is(await client.observableHot.bufferTime(250).take(1).toPromise().then(arr => arr.length), 2);
 });
 
-test('unsubscribes from hot observable streams', async t => {
+test('Value$: unsubscribes from hot observable streams', async t => {
     let counter = 0;
     const subscription = client.observableHot.subscribe(() => counter++);
     await delay(250);
@@ -136,13 +148,45 @@ test('unsubscribes from hot observable streams', async t => {
     t.is(counter, 2);
 });
 
-test('automatically unsubscribes when renderer emits "destroyed" event', async t => {
+test('Value$: automatically unsubscribes when renderer emits "destroyed" event', async t => {
     let counter = 0;
     client.observableHot.subscribe(() => counter++);
     await delay(250);
     t.is(counter, 2);
     ipcRenderer.emit('destroyed');
     await delay(250);
+    t.is(counter, 2);
+});
+
+test('Function$: returns observable', async t => {
+    t.deepEqual(await client.makeObservableProp(1, 2).toArray().toPromise(), [1, 2]);
+});
+
+test('Function$: returns observable errors', async t => {
+    return t.throws(client.makeObservableError().toPromise());
+});
+
+test('Function$: makes hot observable streams', async t => {
+    return t.is(await client.makeObservableHot(80).bufferTime(250).take(1).toPromise().then(arr => arr.length), 3);
+});
+
+test('Function$: unsubscribes from hot observable streams', async t => {
+    let counter = 0;
+    const subscription = client.makeObservableHot(50).subscribe(() => counter++);
+    await delay(110);
+    t.is(counter, 2);
+    subscription.unsubscribe()
+    await delay(110);
+    t.is(counter, 2);
+});
+
+test('Function$: automatically unsubscribes when renderer emits "destroyed" event', async t => {
+    let counter = 0;
+    client.makeObservableHot(50).subscribe(() => counter++);
+    await delay(110);
+    t.is(counter, 2);
+    ipcRenderer.emit('destroyed');
+    await delay(110);
     t.is(counter, 2);
 });
 
