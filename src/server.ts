@@ -89,25 +89,13 @@ class ProxyServerHandler {
 
     private handleSubscribe(request: SubscribeRequest, sender: WebContents) {
         const { propKey, subscriptionId } = request;
-
-        if (this.subscriptions[subscriptionId]) {
-            throw new IpcProxyError(`A subscription with Id [${subscriptionId}] already exists`);
-        }
-
         const obs = this.target[propKey];
 
         if (!isObservable(obs)) {
             throw new IpcProxyError(`Remote property [${propKey}] is not an observable`);
         }
 
-        this.subscriptions[subscriptionId] = obs.subscribe(
-            (value) => sender.send(subscriptionId, { type: ResponseType.Next, value }),
-            (error: Error) => sender.send(subscriptionId, { type: ResponseType.Error, error: Errio.stringify(error) }),
-            () => sender.send(subscriptionId, { type: ResponseType.Complete }),
-        );
-
-        /* If the sender does not clean up after itself then we need to do it */
-        sender.once('destroyed', () => this.doUnsubscribe(subscriptionId));        
+        this.doSubscribe(obs, subscriptionId, sender);
     }
 
     private handleApplySubscribe(request: ApplySubscribeRequest, sender: WebContents): any {

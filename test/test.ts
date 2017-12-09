@@ -19,7 +19,7 @@ class ProxiedClass {
     observableProp = Observable.of(1, 2, 3);
     observableHot = Observable.interval(100);
     observableError = Observable.throw(new Error('error on stream'));
-    makeObservableProp = (...args: number[]) => Observable.of(...args);
+    makeObservable = (...args: number[]) => Observable.of(...args);
     makeObservableHot = (interval: number) => Observable.interval(interval);
     makeObservableError = () => Observable.throw(new Error('error on stream'));
     returnObservableProp = () => this.observableProp;
@@ -39,7 +39,7 @@ interface ProxyObject {
     observableProp: Observable<number>;
     observableError: Observable<any>;
     observableHot: Observable<any>;
-    makeObservableProp: (...args: number[]) => Observable<number>;
+    makeObservable: (...args: number[]) => Observable<number>;
     makeObservableError: () => Observable<any>;
     makeObservableHot: (interval: number) => Observable<any>;
     returnObservableProp: () => Observable<number>;
@@ -63,7 +63,7 @@ const descriptor = {
         observableProp: ProxyPropertyType.Value$,
         observableError: ProxyPropertyType.Value$,
         observableHot: ProxyPropertyType.Value$,
-        makeObservableProp: ProxyPropertyType.Function$,
+        makeObservable: ProxyPropertyType.Function$,
         makeObservableError: ProxyPropertyType.Function$,
         makeObservableHot: ProxyPropertyType.Function$,
         returnObservableProp: ProxyPropertyType.Function$,
@@ -159,7 +159,7 @@ test('Value$: automatically unsubscribes when renderer emits "destroyed" event',
 });
 
 test('Function$: returns observable', async t => {
-    t.deepEqual(await client.makeObservableProp(1, 2).toArray().toPromise(), [1, 2]);
+    t.deepEqual(await client.makeObservable(1, 2).toArray().toPromise(), [1, 2]);
 });
 
 test('Function$: returns observable errors', async t => {
