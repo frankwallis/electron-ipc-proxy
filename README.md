@@ -1,12 +1,12 @@
 electron-ipc-proxy
 ============================
-Transparently proxy objects from the main thread to renderer threads in electron using asynchronous IPC communication
+Transparent asynchronous remoting between renderer threads and the main thread using IPC.
 
 [![build status](https://secure.travis-ci.org/frankwallis/electron-ipc-proxy.png?branch=master)](http://travis-ci.org/frankwallis/electron-ipc-proxy)
 
 ### Overview ###
 
-Say you have a service which exists in your main (nodejs) thread and you want to access it from one of your windows, simply register the service with electron-ipc-proxy and you will be able to create a proxy object in the browser window which acts exactly like calling the service directly. All communication happens asynchronously (unlike using electron remote) and so you won't freeze up your application.
+Imagine you have a service which exists in your main (nodejs) thread and you want to access the service from one of your windows. By registering the service with electron-ipc-proxy, you will be able to create proxy objects in the browser window which behave as if they were calling the service directly. All communication happens asynchronously (unlike using electron remote) and so you won't freeze up your application.
 
 ### Example ###
 
@@ -41,7 +41,7 @@ todoService.addTodo('frank', 'write the docs')
 todoService.todos.subscribe(...)
 ```
 
-What's this "serviceDescriptor" thing? Service descriptors tell electron-ipc-proxy the shape of the object to be proxied and the name of a unique channel to communicate on, they're very simple:
+What is this "serviceDescriptor" parameter? Service descriptors tell electron-ipc-proxy the shape of the object to be proxied and the name of a unique channel to communicate on, they're very simple:
 
 ```js
 import { ProxyPropertyType } from 'electron-ipc-proxy'

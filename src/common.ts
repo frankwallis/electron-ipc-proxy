@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 const Errio = require('errio');
 
+/* Proxy Descriptor Types */
 export enum ProxyPropertyType {
     Value = 'value',
     Value$ = 'value$',
@@ -13,6 +14,7 @@ export interface ProxyDescriptor {
     properties: { [propKey: string]: ProxyPropertyType };
 }
 
+/* Request Types */
 export enum RequestType {
     Get = 'get',
     Apply = 'apply',
@@ -56,6 +58,7 @@ export interface UnsubscribeRequest {
 
 export type Request = UnknownRequest | GetRequest | ApplyRequest | SubscribeRequest | ApplySubscribeRequest | UnsubscribeRequest;
 
+/* Response Types */
 export enum ResponseType {
     Result = 'result',    
     Error = 'error',
@@ -84,6 +87,7 @@ export interface CompleteResponse {
 
 export type Response = ResultResponse | ErrorResponse | NextResponse | CompleteResponse;
 
+/* Custom Error */
 export class IpcProxyError extends Error {
     constructor(message: string) {
         super(message);
@@ -92,6 +96,7 @@ export class IpcProxyError extends Error {
 }
 Errio.register(IpcProxyError);
 
+/* Utils */
 export function isFunction(value: any): value is Function {
     return value && typeof value === 'function';
 }
