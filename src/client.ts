@@ -7,117 +7,91 @@ const uuidv4 = require('uuid/v4');
 const Errio = require('errio');
 
 export function createProxy<T>(descriptor: ProxyDescriptor, transport: IpcRenderer = ipcRenderer): T {
-    return new Proxy({}, new ProxyClientHandler(descriptor, transport)) as T;
+    const result = {};
+
+    Object.keys(descriptor.properties).forEach(propKey => {
+        const propertyType = descriptor.properties[propKey];
+
+        if (propertyType === ProxyPropertyType.Value) {
+            Object.defineProperty(result, propKey, {
+                enumerable: true,
+                get: () => makeRequest({ type: RequestType.Get, propKey }, descriptor.channel, transport)
+            });
+        }
+        else if (propertyType === ProxyPropertyType.Value$) {
+            Object.defineProperty(result, propKey, {
+                enumerable: true,
+                get: () => makeObservable({ type: RequestType.Subscribe, propKey }, descriptor.channel, transport)
+            });
+        }
+        else if (propertyType === ProxyPropertyType.Function) {
+            Object.defineProperty(result, propKey, {
+                enumerable: true,
+                get: () => (...args: any[]) => makeRequest({ type: RequestType.Apply, propKey, args }, descriptor.channel, transport)
+            });
+        }
+        else if (propertyType === ProxyPropertyType.Function$) {
+            Object.defineProperty(result, propKey, {
+                enumerable: true,
+                get: () => (...args: any[]) => makeObservable({ type: RequestType.ApplySubscribe, propKey, args }, descriptor.channel, transport)
+            });
+        }
+    });
+
+    return result as T;
 }
 
-class ProxyClientHandler implements ProxyHandler<any> {
-    constructor(private descriptor: ProxyDescriptor, private transport: IpcRenderer) {}
+function makeRequest(request: Request, channel: string, transport: IpcRenderer): Promise<any> {
+    const correlationId = uuidv4();
+    transport.send(channel, request, correlationId);
 
-    private makeRequest(request: Request): Promise<any> {
-        const correlationId = uuidv4();
-        this.transport.send(this.descriptor.channel, request, correlationId);
-
-        return new Promise((resolve, reject) => {
-            this.transport.once(correlationId, (event: Event, response: Response) => {
-                switch (response.type) {
-                    case ResponseType.Result:
-                        return resolve(response.result);
-                    case ResponseType.Error:
-                        return reject(Errio.parse(response.error));
-                    default:
-                        return reject(new IpcProxyError(`Unhandled response type [${response.type}]`));
-                }
-            });
+    return new Promise((resolve, reject) => {
+        transport.once(correlationId, (event: Event, response: Response) => {
+            switch (response.type) {
+                case ResponseType.Result:
+                    return resolve(response.result);
+                case ResponseType.Error:
+                    return reject(Errio.parse(response.error));
+                default:
+                    return reject(new IpcProxyError(`Unhandled response type [${response.type}]`));
+            }
         });
-    }
+    });
+}
 
-    private makeObservable(requestType: RequestType.Subscribe | RequestType.ApplySubscribe, propKey: string, args?: any[]): Observable<any> {
-        return new Observable((obs) => {
-            const subscriptionId = uuidv4();
-    
-            this.transport.on(subscriptionId, (event: Event, response: Response) => {
-                switch (response.type) {
-                    case ResponseType.Next:
-                        return obs.next(response.value);
-                    case ResponseType.Error:
-                        return obs.error(Errio.parse(response.error));
-                    case ResponseType.Complete:
-                        return obs.complete();
-                    default:
-                        return obs.error(new IpcProxyError(`Unhandled response type [${response.type}]`));
-                }
+function makeObservable(request: Request, channel: string, transport: IpcRenderer): Observable<any> {
+    return new Observable((obs) => {
+        const subscriptionId = uuidv4();
+        const subscriptionRequest = { ...request, subscriptionId };
+
+        transport.on(subscriptionId, (event: Event, response: Response) => {
+            switch (response.type) {
+                case ResponseType.Next:
+                    return obs.next(response.value);
+                case ResponseType.Error:
+                    return obs.error(Errio.parse(response.error));
+                case ResponseType.Complete:
+                    return obs.complete();
+                default:
+                    return obs.error(new IpcProxyError(`Unhandled response type [${response.type}]`));
+            }
+        });
+
+        makeRequest(subscriptionRequest, channel, transport)
+            .catch((err: Error) => {
+                console.log('Error subscribing to remote observable', err);                    
+                obs.error(err);
             });
 
-            const request = (requestType === RequestType.Subscribe) ?
-                { type: RequestType.Subscribe, propKey, subscriptionId } :
-                { type: RequestType.ApplySubscribe, propKey, subscriptionId, args };
-
-            this.makeRequest(request as Request)
-                .catch((err: Error) => {
-                    console.log('Error subscribing to remote observable', err);                    
+        return () => {
+            transport.removeAllListeners(subscriptionId);
+            makeRequest({ type: RequestType.Unsubscribe, subscriptionId }, channel, transport)
+                .catch(err => {
+                    console.log('Error unsubscribing from remote observale', err);
                     obs.error(err);
                 });
-
-            return () => {
-                this.transport.removeAllListeners(subscriptionId);
-                this.makeRequest({ type: RequestType.Unsubscribe, subscriptionId })
-                    .catch(err => {
-                        console.log('Error unsubscribing from remote observale', err);
-                        obs.error(err);
-                    });
-            };
-        });
-    }
-
-    public get(target: any, p: PropertyKey, receiver: any): any {
-        const propKey = p as string;
-
-        if (this.descriptor.properties[propKey] === ProxyPropertyType.Value) {
-            return this.makeRequest({ type: RequestType.Get, propKey });
-        }
-        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Value$) {
-            if (!target[propKey]) {
-                target[propKey] = this.makeObservable(RequestType.Subscribe, propKey);
-            }
-            return target[propKey];
-        }
-        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Function) {
-            if (!target[propKey]) {
-                target[propKey] = (...args: any[]) => this.makeRequest({ type: RequestType.Apply, propKey, args });
-            }
-            return target[propKey];
-        }
-        else if (this.descriptor.properties[propKey] === ProxyPropertyType.Function$) {
-            if (!target[propKey]) {
-                target[propKey] = (...args: any[]) => this.makeObservable(RequestType.ApplySubscribe, propKey, args);
-            }
-            return target[propKey];
-        }
-        else {
-            throw new IpcProxyError(`Local property "${propKey}" has not been made available on the proxy object`);
-        }
-    }
-    
-    public isExtensible(target: any): boolean {
-        return false;
-    }
-    
-    private throwUnsupported(name: string): any {
-        throw new IpcProxyError(`"${name}" is not supported by the proxy object`);
-    }
-    
-    public set = () => this.throwUnsupported('set');
-    public apply = () => this.throwUnsupported('apply');
-    public deleteProperty = () => this.throwUnsupported('deleteProperty');
-    public defineProperty = () => this.throwUnsupported('defineProperty');
-    public getPrototypeOf = () => this.throwUnsupported('getPrototypeOf');
-    public setPrototypeOf = () => this.throwUnsupported('setPrototypeOf');
-    public getOwnPropertyDescriptor = () => this.throwUnsupported('getOwnPropertyDescriptor');
-    public has = () => this.throwUnsupported('has');
-    public enumerate = () => this.throwUnsupported('enumerate');
-    public ownKeys = () => this.throwUnsupported('ownKeys');
-    public preventExtensions = () => this.throwUnsupported('preventExtensions');
-    public construct = () => this.throwUnsupported('construct');
+        };
+    });
 }
 
 export { ProxyDescriptor, ProxyPropertyType }

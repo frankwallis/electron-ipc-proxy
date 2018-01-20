@@ -41,14 +41,14 @@ export interface ApplyRequest {
 export interface SubscribeRequest {
     type: RequestType.Subscribe;
     propKey: string;
-    subscriptionId: string;
+    subscriptionId?: string;
 }
 
 export interface ApplySubscribeRequest {
     type: RequestType.ApplySubscribe;
     propKey: string;
     args: any[];
-    subscriptionId: string;
+    subscriptionId?: string;
 }
 
 export interface UnsubscribeRequest {

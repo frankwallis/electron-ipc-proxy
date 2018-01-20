@@ -45,7 +45,6 @@ interface ProxyObject {
     returnObservableProp: () => Observable<number>;
     privateProperty: Promise<number>;
     missingFunction: () => Promise<number>;
-    newProperty: number;
 }
 
 const descriptor = {
@@ -193,11 +192,11 @@ test('Function$: automatically unsubscribes when renderer emits "destroyed" even
 /* Programmer errors */
 
 test('throws when trying to set property', t => {
-    return t.throws(() => client.newProperty = 12);
+    return t.throws(() => client.stringMemberSync = Promise.resolve('newvalue'));
 });
 
-test('throws when trying to access a property which has not been exposed', t => {
-    return t.throws(() => client.privateProperty);
+test('returns undefined when trying to access a property which has not been exposed', t => {
+    return t.is(client.privateProperty, undefined);
 });
 
 test('throws when trying to call a function which does not exist', t => {
