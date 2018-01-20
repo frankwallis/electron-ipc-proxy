@@ -1,6 +1,11 @@
 import { Observable } from 'rxjs/Observable';
 import { IpcRenderer, Event } from 'electron';
-import { Request, RequestType, Response, ResponseType, ProxyDescriptor, ProxyPropertyType, IpcProxyError } from './common';
+import { 
+    Request, RequestType, 
+    Response, ResponseType, 
+    ProxyDescriptor, ProxyPropertyType 
+} from './common';
+import { IpcProxyError } from './utils';
 
 const { ipcRenderer } = require('electron');
 const uuidv4 = require('uuid/v4');

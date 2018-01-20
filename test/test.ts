@@ -1,6 +1,7 @@
 import test from 'ava';
 import { Observable } from 'rxjs';
-import { ProxyPropertyType, IpcProxyError } from '../src/common';
+import { ProxyPropertyType } from '../src/common';
+import { IpcProxyError } from '../src/utils';
 import { registerProxy } from '../src/server';
 import { createProxy } from '../src/client';
 import { mockIpc, delay } from './_mocks';
@@ -189,25 +190,29 @@ test('Function$: automatically unsubscribes when renderer emits "destroyed" even
     t.is(counter, 2);
 });
 
-/* Programmer errors */
+/* Error handling */
 
-test('throws when trying to set property', t => {
+test('registerProxy: throws when channel is already registered', t => {
+    return t.throws(() => registerProxy({}, { channel: 'channelName', properties: {} }));
+});
+
+test('proxy: throws when trying to set property', t => {
     return t.throws(() => client.stringMemberSync = Promise.resolve('newvalue'));
 });
 
-test('returns undefined when trying to access a property which has not been exposed', t => {
+test('proxy: returns undefined when trying to access a property which has not been exposed', t => {
     return t.is(client.privateProperty, undefined);
 });
 
-test('throws when trying to call a function which does not exist', t => {
+test('proxy: throws when trying to call a function which does not exist', t => {
     return t.throws(client.missingFunction());
 });
 
-test('shows "IpcProxyError" in the output', t => {
+test('IpcProxyError: shows "IpcProxyError" in the output', t => {
     return t.is(new IpcProxyError('some message').toString(), 'IpcProxyError: some message');
 });
 
-test('shows "IpcProxyError" in the remote output', t => {
+test('IpcProxyError: shows "IpcProxyError" in the remote output', t => {
     return client.missingFunction()
         .then(() => t.fail('unexpected resolve'))
         .catch(err => t.is(err.toString(), 'IpcProxyError: Remote property [missingFunction] is not a function'));

@@ -1,8 +1,5 @@
-import { Observable } from 'rxjs/Observable';
-const Errio = require('errio');
-
 /* Proxy Descriptor Types */
-export enum ProxyPropertyType {
+export const enum ProxyPropertyType {
     Value = 'value',
     Value$ = 'value$',
     Function = 'function',
@@ -15,7 +12,7 @@ export interface ProxyDescriptor {
 }
 
 /* Request Types */
-export enum RequestType {
+export const enum RequestType {
     Get = 'get',
     Apply = 'apply',
     Subscribe = 'subscribe',
@@ -59,7 +56,7 @@ export interface UnsubscribeRequest {
 export type Request = UnknownRequest | GetRequest | ApplyRequest | SubscribeRequest | ApplySubscribeRequest | UnsubscribeRequest;
 
 /* Response Types */
-export enum ResponseType {
+export const enum ResponseType {
     Result = 'result',    
     Error = 'error',
     Next = 'next',
@@ -86,22 +83,3 @@ export interface CompleteResponse {
 }
 
 export type Response = ResultResponse | ErrorResponse | NextResponse | CompleteResponse;
-
-/* Custom Error */
-export class IpcProxyError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = this.constructor.name;
-    }
-}
-Errio.register(IpcProxyError);
-
-/* Utils */
-export function isFunction(value: any): value is Function {
-    return value && typeof value === 'function';
-}
-
-export function isObservable<T>(value: any): value is Observable<T> {
-    return value && typeof value.subscribe === 'function'
-}
-

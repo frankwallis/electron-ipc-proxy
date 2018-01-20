@@ -1,12 +1,13 @@
+import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 import { ipcMain, IpcMain, Event, WebContents } from 'electron';
 import { 
     Request, RequestType, ResponseType,
     GetRequest, ApplyRequest, SubscribeRequest, UnsubscribeRequest,
-    ProxyDescriptor, ProxyPropertyType, IpcProxyError,
-    isFunction, isObservable, ApplySubscribeRequest
+    ProxyDescriptor, ProxyPropertyType, ApplySubscribeRequest
 } from './common';
-import { Observable } from 'rxjs/Observable';
+import { IpcProxyError, isFunction, isObservable } from './utils';
+
 const Errio = require('errio');
 
 const registrations: { [channel: string]: ProxyServerHandler | null } = {};
