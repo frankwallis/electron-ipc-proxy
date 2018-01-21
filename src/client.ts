@@ -17,33 +17,33 @@ export function createProxy<T>(descriptor: ProxyDescriptor, transport: IpcRender
     Object.keys(descriptor.properties).forEach(propKey => {
         const propertyType = descriptor.properties[propKey];
 
-        if (propertyType === ProxyPropertyType.Value) {
-            Object.defineProperty(result, propKey, {
-                enumerable: true,
-                get: () => makeRequest({ type: RequestType.Get, propKey }, descriptor.channel, transport)
-            });
-        }
-        else if (propertyType === ProxyPropertyType.Value$) {
-            Object.defineProperty(result, propKey, {
-                enumerable: true,
-                get: () => makeObservable({ type: RequestType.Subscribe, propKey }, descriptor.channel, transport)
-            });
-        }
-        else if (propertyType === ProxyPropertyType.Function) {
-            Object.defineProperty(result, propKey, {
-                enumerable: true,
-                get: () => (...args: any[]) => makeRequest({ type: RequestType.Apply, propKey, args }, descriptor.channel, transport)
-            });
-        }
-        else if (propertyType === ProxyPropertyType.Function$) {
-            Object.defineProperty(result, propKey, {
-                enumerable: true,
-                get: () => (...args: any[]) => makeObservable({ type: RequestType.ApplySubscribe, propKey, args }, descriptor.channel, transport)
-            });
-        }
+        Object.defineProperty(result, propKey, {
+            enumerable: true,
+            get: memoize(() => getProperty(propertyType, propKey, descriptor.channel, transport))
+        });
     });
 
     return result as T;
+}
+
+function getProperty(propertyType: ProxyPropertyType, propKey: string, channel: string, transport: IpcRenderer) {
+    switch (propertyType) {
+        case ProxyPropertyType.Value:
+            return makeRequest({ type: RequestType.Get, propKey }, channel, transport);
+        case ProxyPropertyType.Value$:
+            return makeObservable({ type: RequestType.Subscribe, propKey }, channel, transport);
+        case ProxyPropertyType.Function:
+            return (...args: any[]) => makeRequest({ type: RequestType.Apply, propKey, args }, channel, transport);
+        case ProxyPropertyType.Function$:
+            return (...args: any[]) => makeObservable({ type: RequestType.ApplySubscribe, propKey, args }, channel, transport);            
+        default:
+            throw new IpcProxyError(`Unrecognised ProxyPropertyType [${propertyType}`);
+    }
+}
+
+function memoize<T>(getter: () => T): () => T {
+    let result: T = null;
+    return () => result ? result : result = getter();
 }
 
 function makeRequest(request: Request, channel: string, transport: IpcRenderer): Promise<any> {

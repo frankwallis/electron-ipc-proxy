@@ -90,6 +90,10 @@ test('Value: returns string property', async t => {
     t.is(await client.stringMemberSync, 'a string');
 });
 
+test('Value: memoizes the Promise', async t => {
+    t.is(client.stringMemberSync, client.stringMemberSync);
+});
+
 test('Value: binds "this" correctly when accessing getter', async t => {
     t.is(await client.stringGetter, "a string");
 });
@@ -112,6 +116,10 @@ test('Function: handles function which returns result synchronously', async t =>
 
 test('Function: handles function which returns a promise', async t => {
     t.is(await client.addAsync(4, 7), 11);
+});
+
+test('Function: memoizes the function', async t => {
+    t.is(client.addAsync, client.addAsync);
 });
 
 test('Function: binds "this" correctly when calling function', async t => {
