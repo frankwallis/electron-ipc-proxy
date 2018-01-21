@@ -7,7 +7,6 @@ import {
     ProxyDescriptor, ProxyPropertyType, ApplySubscribeRequest
 } from './common';
 import { IpcProxyError, isFunction, isObservable } from './utils';
-
 const Errio = require('errio');
 
 const registrations: { [channel: string]: ProxyServerHandler | null } = {};

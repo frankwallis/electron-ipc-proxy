@@ -6,7 +6,6 @@ import {
     ProxyDescriptor, ProxyPropertyType 
 } from './common';
 import { IpcProxyError } from './utils';
-
 const { ipcRenderer } = require('electron');
 const uuidv4 = require('uuid/v4');
 const Errio = require('errio');
@@ -37,7 +36,7 @@ function getProperty(propertyType: ProxyPropertyType, propKey: string, channel: 
         case ProxyPropertyType.Function$:
             return (...args: any[]) => makeObservable({ type: RequestType.ApplySubscribe, propKey, args }, channel, transport);            
         default:
-            throw new IpcProxyError(`Unrecognised ProxyPropertyType [${propertyType}`);
+            throw new IpcProxyError(`Unrecognised ProxyPropertyType [${propertyType}]`);
     }
 }
 
