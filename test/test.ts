@@ -143,7 +143,7 @@ test('Value$: handles observable errors', async t => {
 });
 
 test('Value$: handles hot observable streams', async t => {
-    return t.is(await client.observableHot.bufferTime(250).take(1).toPromise().then(arr => arr.length), 2);
+    return t.is(await client.observableHot.bufferTime(220).take(1).toPromise().then(arr => arr.length), 2);
 });
 
 test('Value$: unsubscribes from hot observable streams', async t => {

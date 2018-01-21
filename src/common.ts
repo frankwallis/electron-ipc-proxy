@@ -1,5 +1,5 @@
 /* Proxy Descriptor Types */
-export const enum ProxyPropertyType {
+export enum ProxyPropertyType {
     Value = 'value',
     Value$ = 'value$',
     Function = 'function',
@@ -12,7 +12,7 @@ export interface ProxyDescriptor {
 }
 
 /* Request Types */
-export const enum RequestType {
+export enum RequestType {
     Get = 'get',
     Apply = 'apply',
     Subscribe = 'subscribe',
@@ -56,7 +56,7 @@ export interface UnsubscribeRequest {
 export type Request = UnknownRequest | GetRequest | ApplyRequest | SubscribeRequest | ApplySubscribeRequest | UnsubscribeRequest;
 
 /* Response Types */
-export const enum ResponseType {
+export enum ResponseType {
     Result = 'result',    
     Error = 'error',
     Next = 'next',
