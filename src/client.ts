@@ -1,14 +1,13 @@
 import { Observable } from 'rxjs/Observable';
-import { IpcRenderer, Event } from 'electron';
+import { IpcRenderer, ipcRenderer, Event } from 'electron';
+import uuidv4 from 'uuid/v4';
+import Errio from 'errio';
+import { IpcProxyError } from './utils';
 import { 
     Request, RequestType, 
     Response, ResponseType, 
     ProxyDescriptor, ProxyPropertyType 
 } from './common';
-import { IpcProxyError } from './utils';
-const { ipcRenderer } = require('electron');
-const uuidv4 = require('uuid/v4');
-const Errio = require('errio');
 
 export function createProxy<T>(descriptor: ProxyDescriptor, transport: IpcRenderer = ipcRenderer): T {
     const result = {};

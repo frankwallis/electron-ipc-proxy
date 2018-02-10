@@ -13,5 +13,7 @@ export default {
       browser: true
     }),
     commonjs()
-  ]
+  ],
+  external: ['electron'],
+  globals: function (id) { return 'require("' + id + '")'; } // HACK!
 };

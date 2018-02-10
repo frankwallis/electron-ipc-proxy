@@ -1,6 +1,6 @@
 {
   "name": "electron-ipc-proxy",
-  "version": "0.5.3",
+  "version": "1.0.0",
   "description": "Make objects in main thread available to renderer threads over IPC",
   "main": "src/server.js",
   "browser": "src/client.js",
@@ -44,19 +44,22 @@
   "homepage": "https://github.com/frankwallis/electron-ipc-proxy",
   "dependencies": {
     "errio": "^1.2.2",
-    "tslib": "^1.8.0",
+    "tslib": "^1.9.0",
     "uuid": "^3.1.0"
+  },
+  "peerDependencies": {
+    "electron": "^1.7.0"
   },
   "devDependencies": {
     "@types/uuid": "^3.4.3",
     "ava": "^0.23.0",
-    "electron": "^1.7.9",
+    "electron": "^1.8.2",
     "prettier": "^1.8.2",
     "reify": "^0.12.3",
     "rollup": "^0.51.7",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rxjs": "^5.5.2",
-    "typescript": "2.5.2"
+    "typescript": "2.7.1"
   }
 }
