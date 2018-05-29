@@ -1,5 +1,6 @@
 import test from 'ava';
-import { Observable } from 'rxjs';
+import { Observable, of, interval, throwError } from 'rxjs';
+import { bufferTime, take, toArray } from 'rxjs/operators';
 import { ProxyPropertyType } from '../src/common';
 import { IpcProxyError } from '../src/utils';
 import { registerProxy } from '../src/server';
@@ -17,12 +18,12 @@ class ProxiedClass {
     addAsync = (num1: number, num2: number) => Promise.resolve(num1 + num2);
     returnStringMember() { return this.stringMemberSync; }
     respondAfter = (millis: number) => new Promise(resolve => setTimeout(resolve, millis));
-    observableProp = Observable.of(1, 2, 3);
-    observableHot = Observable.interval(100);
-    observableError = Observable.throw(new Error('error on stream'));
-    makeObservable = (...args: number[]) => Observable.of(...args);
-    makeObservableHot = (interval: number) => Observable.interval(interval);
-    makeObservableError = () => Observable.throw(new Error('error on stream'));
+    observableProp = of(1, 2, 3);
+    observableHot = interval(100);
+    observableError = throwError(new Error('error on stream'));
+    makeObservable = (...args: number[]) => of(...args);
+    makeObservableHot = (millis: number) => interval(millis);
+    makeObservableError = () => throwError(new Error('error on stream'));
     returnObservableProp = () => this.observableProp;
     privateProperty = 42;
 }
@@ -135,7 +136,7 @@ test('Function: does not respond to promises after renderer emits "destroyed" ev
 });
 
 test('Value$: returns observable property', async t => {
-    t.deepEqual(await client.observableProp.toArray().toPromise(), [1, 2, 3]);
+    t.deepEqual(await client.observableProp.pipe(toArray()).toPromise(), [1, 2, 3]);
 });
 
 test('Value$: handles observable errors', async t => {
@@ -143,7 +144,7 @@ test('Value$: handles observable errors', async t => {
 });
 
 test('Value$: handles hot observable streams', async t => {
-    return t.is(await client.observableHot.bufferTime(220).take(1).toPromise().then(arr => arr.length), 2);
+    return t.is(await client.observableHot.pipe(bufferTime(220), take(1)).toPromise().then(arr => arr.length), 2);
 });
 
 test('Value$: unsubscribes from hot observable streams', async t => {
@@ -167,7 +168,7 @@ test('Value$: automatically unsubscribes when renderer emits "destroyed" event',
 });
 
 test('Function$: returns observable', async t => {
-    t.deepEqual(await client.makeObservable(1, 2).toArray().toPromise(), [1, 2]);
+    t.deepEqual(await client.makeObservable(1, 2).pipe(toArray()).toPromise(), [1, 2]);
 });
 
 test('Function$: returns observable errors', async t => {
@@ -175,7 +176,7 @@ test('Function$: returns observable errors', async t => {
 });
 
 test('Function$: makes hot observable streams', async t => {
-    return t.is(await client.makeObservableHot(80).bufferTime(250).take(1).toPromise().then(arr => arr.length), 3);
+    return t.is(await client.makeObservableHot(80).pipe(bufferTime(250), take(1)).toPromise().then(arr => arr.length), 3);
 });
 
 test('Function$: unsubscribes from hot observable streams', async t => {

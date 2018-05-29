@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { IpcRenderer, ipcRenderer, Event } from 'electron';
 import uuidv4 from 'uuid/v4';
 import Errio from 'errio';

@@ -1,7 +1,8 @@
 import path from 'path';
 import url from 'url';
 import { app, BrowserWindow } from 'electron';
-import { Observable } from 'rxjs';
+import { interval } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { registerProxy, ProxyPropertyType } from '../';
 
 let lastBounds = null;
@@ -23,7 +24,7 @@ function createWindow(title) {
 const service = {
     createWindow: createWindow,
     add: (num1, num2) => num1 + num2,
-    time: Observable.interval(10).map(() => new Date()),
+    time: interval(10).pipe(map(() => new Date())),
     respondAfter: (millis) => new Promise(resolve => setTimeout(resolve, millis))
 }
 
