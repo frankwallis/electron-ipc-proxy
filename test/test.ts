@@ -80,7 +80,7 @@ let client: ProxyObject = null;
 test.beforeEach(t => {
     ({ ipcMain, ipcRenderer } = mockIpc());
     unregister = registerProxy(new ProxiedClass(), descriptor, ipcMain);
-    client = createProxy<ProxyObject>(descriptor, ipcRenderer);
+    client = createProxy<ProxyObject>(descriptor, Observable, ipcRenderer);
 });
 
 test.afterEach.always(t => {
@@ -176,7 +176,7 @@ test('Function$: returns observable errors', async t => {
 });
 
 test('Function$: makes hot observable streams', async t => {
-    return t.is(await client.makeObservableHot(80).pipe(bufferTime(250), take(1)).toPromise().then(arr => arr.length), 3);
+    return t.is(await client.makeObservableHot(80).pipe(bufferTime(280), take(1)).toPromise().then(arr => arr.length), 3);
 });
 
 test('Function$: unsubscribes from hot observable streams', async t => {
@@ -203,6 +203,14 @@ test('Function$: automatically unsubscribes when renderer emits "destroyed" even
 
 test('registerProxy: throws when channel is already registered', t => {
     return t.throws(() => registerProxy({}, { channel: 'channelName', properties: {} }));
+});
+
+test('createProxy: throws if the Observable constructor is not passed and an Observable property is accessed', t => {
+    return t.throws(() => createProxy({ channel: 'anotherChannel', properties: { someObservable: ProxyPropertyType.Value$ } }, undefined, ipcRenderer));
+});
+
+test('createProxy: does not throw if the Observable constructor is not passed and there are no Observable properties', t => {
+    return t.notThrows(() => createProxy({ channel: 'anotherChannel', properties: { someProp: ProxyPropertyType.Value } }, undefined, ipcRenderer));
 });
 
 test('proxy: throws when trying to set property', t => {

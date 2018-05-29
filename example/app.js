@@ -1,4 +1,5 @@
 import { createProxy, ProxyPropertyType } from '../';
+import { Observable } from 'rxjs';
 
 /* This is our proxy for accessing the service which executes in the main process */
 const service = createProxy({
@@ -9,7 +10,7 @@ const service = createProxy({
         time: ProxyPropertyType.Value$,
         respondAfter: ProxyPropertyType.Function
     }
-});
+}, Observable);
 
 /* Panel for creating windows */
 const buttonCreateWindow = document.querySelector('#button-create-window');
@@ -25,7 +26,7 @@ async function makeError () {
     else if (errorCount === 2) {
         return service.time();
     }
-    return Promise.reject(new Error('unexpcted'));
+    return Promise.reject(new Error('unexpected'));
 }
 const buttonMakeError = document.querySelector('#button-make-error');
 const displayError = document.querySelector('#error-display');
