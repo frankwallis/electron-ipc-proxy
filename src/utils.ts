@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import Errio from 'errio';
+import * as Errio from 'errio';
 
 /* Custom Error */
 export class IpcProxyError extends Error {
@@ -18,4 +18,3 @@ export function isFunction(value: any): value is Function {
 export function isObservable<T>(value: any): value is Observable<T> {
     return value && typeof value.subscribe === 'function'
 }
-
