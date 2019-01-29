@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import * as Errio from 'errio';
+import Errio from 'errio';
 
 /* Custom Error */
 export class IpcProxyError extends Error {

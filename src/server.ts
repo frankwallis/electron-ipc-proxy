@@ -1,6 +1,6 @@
 import { Observable, Subscription } from 'rxjs';
 import { ipcMain, IpcMain, Event, WebContents } from 'electron';
-import * as Errio from 'errio';
+import Errio from 'errio';
 import { IpcProxyError, isFunction, isObservable } from './utils';
 import {
     Request, RequestType, ResponseType,

@@ -1,7 +1,7 @@
 import { Subscribable, Observer, TeardownLogic } from 'rxjs';
 import { IpcRenderer, ipcRenderer, Event } from 'electron';
-import * as uuidv4 from 'uuid/v4';
-import * as Errio from 'errio';
+import uuidv4 from 'uuid/v4';
+import Errio from 'errio';
 import { IpcProxyError } from './utils';
 import {
     Request, RequestType,

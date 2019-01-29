@@ -8,6 +8,7 @@
     "sourceMap": true,
     "noEmitHelpers": true,
     "importHelpers": true,
+    "esModuleInterop": true,
     "strict": true,
     "strictFunctionTypes": false,
     "strictNullChecks": false,
