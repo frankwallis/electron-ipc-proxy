@@ -3,10 +3,10 @@ import { IpcRenderer, ipcRenderer, Event } from 'electron';
 import uuidv4 from 'uuid/v4';
 import Errio from 'errio';
 import { IpcProxyError } from './utils';
-import { 
-    Request, RequestType, 
-    Response, ResponseType, 
-    ProxyDescriptor, ProxyPropertyType 
+import {
+    Request, RequestType,
+    Response, ResponseType,
+    ProxyDescriptor, ProxyPropertyType
 } from './common';
 
 export interface ObservableConstructor {
@@ -44,7 +44,7 @@ function getProperty(propertyType: ProxyPropertyType, propKey: string, channel: 
         case ProxyPropertyType.Function:
             return (...args: any[]) => makeRequest({ type: RequestType.Apply, propKey, args }, channel, transport);
         case ProxyPropertyType.Function$:
-            return (...args: any[]) => makeObservable({ type: RequestType.ApplySubscribe, propKey, args }, channel, ObservableCtor, transport);            
+            return (...args: any[]) => makeObservable({ type: RequestType.ApplySubscribe, propKey, args }, channel, ObservableCtor, transport);
         default:
             throw new IpcProxyError(`Unrecognised ProxyPropertyType [${propertyType}]`);
     }
@@ -93,7 +93,7 @@ function makeObservable(request: Request, channel: string, ObservableCtor: Obser
 
         makeRequest(subscriptionRequest, channel, transport)
             .catch((err: Error) => {
-                console.log('Error subscribing to remote observable', err);                    
+                console.log('Error subscribing to remote observable', err);
                 obs.error(err);
             });
 

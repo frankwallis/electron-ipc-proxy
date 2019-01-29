@@ -18,4 +18,3 @@ export function isFunction(value: any): value is Function {
 export function isObservable<T>(value: any): value is Observable<T> {
     return value && typeof value.subscribe === 'function'
 }
-

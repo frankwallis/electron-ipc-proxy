@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "module": "esnext",
+    "target": "es2015",
+    "module": "commonjs",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "sourceMap": true,
     "noEmitHelpers": true,
     "importHelpers": true,
+    "esModuleInterop": true,
     "strict": true,
     "strictFunctionTypes": false,
     "strictNullChecks": false,

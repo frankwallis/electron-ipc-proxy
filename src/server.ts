@@ -2,7 +2,7 @@ import { Observable, Subscription } from 'rxjs';
 import { ipcMain, IpcMain, Event, WebContents } from 'electron';
 import Errio from 'errio';
 import { IpcProxyError, isFunction, isObservable } from './utils';
-import { 
+import {
     Request, RequestType, ResponseType,
     GetRequest, ApplyRequest, SubscribeRequest, UnsubscribeRequest,
     ProxyDescriptor, ProxyPropertyType, ApplySubscribeRequest
@@ -12,11 +12,11 @@ const registrations: { [channel: string]: ProxyServerHandler | null } = {};
 
 export function registerProxy<T>(target: T, descriptor: ProxyDescriptor, transport: IpcMain = ipcMain): VoidFunction {
     const { channel } = descriptor;
-    
+
     if (registrations[channel]) {
         throw new IpcProxyError(`Proxy object has already been registered on channel ${channel}`);
     }
-    
+
     const server = new ProxyServerHandler(target);
     registrations[channel] = server;
 
@@ -24,7 +24,7 @@ export function registerProxy<T>(target: T, descriptor: ProxyDescriptor, transpo
         let { sender } = event;
         sender.once('destroyed', () => { sender = null });
 
-        server.handleRequest(request, sender)        
+        server.handleRequest(request, sender)
             .then(result => sender && sender.send(correlationId, { type: ResponseType.Result, result }))
             .catch(error => sender && sender.send(correlationId, { type: ResponseType.Error, error: Errio.stringify(error) }));
     });
@@ -48,7 +48,7 @@ class ProxyServerHandler {
     constructor(private target: any) {}
 
     private subscriptions: { [subscriptionId: string]: Subscription } = {};
-    
+
     public async handleRequest(request: Request, sender: WebContents): Promise<any> {
         switch (request.type) {
             case RequestType.Get:
@@ -105,7 +105,7 @@ class ProxyServerHandler {
             throw new IpcProxyError(`Remote property [${propKey}] is not a function`)
         }
 
-        const obs = func.apply(this.target, args);        
+        const obs = func.apply(this.target, args);
 
         if (!isObservable(obs)) {
             throw new IpcProxyError(`Remote function [${propKey}] did not return an observable`);
@@ -113,7 +113,7 @@ class ProxyServerHandler {
 
         this.doSubscribe(obs, subscriptionId, sender);
     }
-    
+
     private doSubscribe(obs: Observable<any>, subscriptionId: string, sender: WebContents) {
         if (this.subscriptions[subscriptionId]) {
             throw new IpcProxyError(`A subscription with Id [${subscriptionId}] already exists`);
@@ -126,7 +126,7 @@ class ProxyServerHandler {
         );
 
         /* If the sender does not clean up after itself then we need to do it */
-        sender.once('destroyed', () => this.doUnsubscribe(subscriptionId));        
+        sender.once('destroyed', () => this.doUnsubscribe(subscriptionId));
     }
 
     private handleUnsubscribe(request: UnsubscribeRequest) {
@@ -142,7 +142,7 @@ class ProxyServerHandler {
     private doUnsubscribe(subscriptionId: string) {
         const subscription = this.subscriptions[subscriptionId];
 
-        if (subscription) {        
+        if (subscription) {
             subscription.unsubscribe();
             delete this.subscriptions[subscriptionId];
         }
