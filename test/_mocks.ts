@@ -16,6 +16,7 @@ function createEvent(sender: EventEmitter, receiver: EventEmitter) {
     return {
         sender: {
             once: (channel: string, listener: Function) => sender.once(channel, listener),
+            removeListener: (channel: string, listener: Function) => sender.removeListener(channel, listener),
             send: (channel: string, ...args: any[]) =>
                 sender.emit(channel, createEvent(receiver, sender), ...args)
         }
